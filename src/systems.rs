@@ -17,6 +17,7 @@ pub trait ControlledDynSystem {
     ) -> na::DVector<f32>;
     fn compute_closed_loop_dynamics(&self, state: &na::DVector<f32>) -> na::DVector<f32>;
     fn get_observation<'a>(&self, state: &'a na::DVector<f32>) -> &'a na::DVector<f32>;
+    fn receive_action(&mut self, action: &na::DVector<f32>);
 }
 
 #[allow(unused_variables)]
@@ -68,6 +69,9 @@ impl ControlledDynSystem for InvertedPendulum {
     }
     fn get_observation<'a>(&self, state: &'a na::DVector<f32>) -> &'a na::DVector<f32> {
         state
+    }
+    fn receive_action(&mut self, action: &na::DVector<f32>) {
+        self.action = action.clone();
     }
 }
 

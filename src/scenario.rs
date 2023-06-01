@@ -1,10 +1,11 @@
 use crate::optimizers::Optimizer;
 use crate::policies::Policy;
-use crate::simulator::Simulator;
+use crate::simulator::{SimState, Simulator};
 use crate::systems::ControlledDynSystem;
 extern crate nalgebra as na;
+use log::{info, warn};
 
-pub struct ScenarioMC<T, P, O>
+pub struct ScenarioMC<'a, T, P, O>
 where
     T: ControlledDynSystem,
     P: Policy,
@@ -14,12 +15,12 @@ where
     n_episodes: usize,
     n_steps: usize,
     n_threads: usize,
-    simulator: Simulator<T>,
+    simulator: &'a mut Simulator<T>,
     policy: P,
     optimizer: O,
 }
 
-impl<T, P, O> ScenarioMC<T, P, O>
+impl<'a, T, P, O> ScenarioMC<'a, T, P, O>
 where
     T: ControlledDynSystem,
     P: Policy,
@@ -30,7 +31,7 @@ where
         n_episodes: usize,
         n_steps: usize,
         n_threads: usize,
-        simulator: Simulator<T>,
+        simulator: &'a mut Simulator<T>,
         policy: P,
         optimizer: O,
     ) -> Self {
@@ -42,6 +43,25 @@ where
             simulator,
             policy,
             optimizer,
+        }
+    }
+    pub fn run(&mut self) {
+        for _ in 0..self.n_iterations {
+            for _ in 0..self.n_episodes {
+                loop {
+                    match self.simulator.step() {
+                        SimState::FINISHED => break,
+                        SimState::RUNNING => {
+                            let (state, time) = self.simulator.get_sim_step_data();
+                            let action = self.policy.choose_action(&state);
+                            {
+                                info!("action: {:?}, state: {:?}", action, state);
+                            }
+                            self.simulator.receive_action(&action);
+                        }
+                    }
+                }
+            }
         }
     }
 }

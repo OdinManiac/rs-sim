@@ -55,4 +55,7 @@ where
     pub fn get_sim_step_data(&self) -> (&na::DVector<f32>, f32) {
         (&self.state, self.time)
     }
+    pub fn receive_action(&mut self, action: &na::DVector<f32>) {
+        self.system.receive_action(action);
+    }
 }
